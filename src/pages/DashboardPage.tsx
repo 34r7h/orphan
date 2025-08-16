@@ -1,5 +1,4 @@
-import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { useAuth } from '@/contexts/AuthContext'
 import { UserRole, IdeaStatus, FundingStatus } from '@/types'
 import {
   Plus,
@@ -8,157 +7,49 @@ import {
   DollarSign,
   TrendingUp,
   Users,
-  Target,
-  Eye,
   MessageSquare,
+  Eye,
+  Target,
+  Zap,
   CheckCircle,
   Clock,
   BarChart3,
   Settings,
-  Zap,
   User
 } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import LoadingSpinner from '@/components/LoadingSpinner'
 
-interface DashboardPageProps {
-  role: UserRole
-}
+export default function DashboardPage() {
+  const { user } = useAuth()
 
-export default function DashboardPage({ role }: DashboardPageProps) {
-  const [isLoading, setIsLoading] = useState(true)
+  // Early return if no user or role
+  if (!user || !user.role) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <LoadingSpinner size="large" />
+      </div>
+    )
+  }
 
-  // Mock data - in production, this would come from API calls
-  const [dashboardData, setDashboardData] = useState<any>({})
+  const { role } = user
 
-  useEffect(() => {
-    const loadDashboardData = async () => {
-      setIsLoading(true)
-      // Simulate API call
-      setTimeout(() => {
-        if (role === UserRole.INNOVATOR) {
-          setDashboardData({
-            ideas: [
-              {
-                id: '1',
-                title: 'Decentralized Task Management Platform',
-                status: IdeaStatus.OPEN,
-                proposalCount: 5,
-                viewCount: 234,
-                createdAt: new Date('2024-01-15'),
-                imageUri: 'https://via.placeholder.com/400'
-              },
-              {
-                id: '2',
-                title: 'AI-Powered Smart Contract Auditor',
-                status: IdeaStatus.IN_PROGRESS,
-                proposalCount: 3,
-                viewCount: 456,
-                createdAt: new Date('2024-01-10'),
-                imageUri: 'https://via.placeholder.com/400'
-              }
-            ],
-            executorProposals: [
-              {
-                id: '1',
-                ideaTitle: 'Decentralized Task Management Platform',
-                executorName: 'Charlie Dev',
-                proposalTitle: 'Full-stack development with React and Solidity',
-                estimatedTimeline: 90,
-                requestedEquity: 95,
-                status: 'pending'
-              }
-            ],
-            activeProjects: [
-              {
-                id: '1',
-                title: 'AI-Powered Smart Contract Auditor',
-                executorName: 'Bob Builder',
-                progress: 65,
-                nextMilestone: 'Security audit completion',
-                nextMilestoneDate: new Date('2024-03-15')
-              }
-            ],
-            totalRoyaltiesEarned: '125.50'
-          })
-        } else if (role === UserRole.EXECUTOR) {
-          setDashboardData({
-            acceptedProjects: [
-              {
-                id: '1',
-                title: 'AI-Powered Smart Contract Auditor',
-                innovatorName: 'Alice Chen',
-                progress: 65,
-                equityPercentage: 95,
-                nextMilestone: 'Security audit completion',
-                nextMilestoneDate: new Date('2024-03-15'),
-                imageUri: 'https://via.placeholder.com/400'
-              }
-            ],
-            investorProposals: [
-              {
-                id: '1',
-                projectTitle: 'AI-Powered Smart Contract Auditor',
-                investorName: 'David Investor',
-                investmentAmount: '25000',
-                requestedEquity: 15,
-                status: 'pending'
-              }
-            ],
-            activeMilestones: [
-              {
-                id: '1',
-                title: 'Security audit completion',
-                projectTitle: 'AI-Powered Smart Contract Auditor',
-                dueDate: new Date('2024-03-15'),
-                progress: 65,
-                status: 'in_progress'
-              }
-            ],
-            totalEquityValue: '47500'
-          })
-        } else if (role === UserRole.INVESTOR) {
-          setDashboardData({
-            investments: [
-              {
-                id: '1',
-                projectTitle: 'Decentralized Task Management Platform',
-                executorName: 'Charlie Dev',
-                investmentAmount: '15000',
-                equityPercentage: 10,
-                status: FundingStatus.FUNDED,
-                progress: 45,
-                nextPayout: '7500',
-                nextPayoutDate: new Date('2024-04-01')
-              }
-            ],
-            portfolioValue: '15000',
-            activeProjects: [
-              {
-                id: '1',
-                title: 'Decentralized Task Management Platform',
-                executorName: 'Charlie Dev',
-                progress: 45,
-                nextMilestone: 'MVP completion',
-                nextMilestoneDate: new Date('2024-03-20')
-              }
-            ],
-            completedMilestones: 2,
-            pendingPayouts: [
-              {
-                milestoneId: '1',
-                amount: '7500',
-                percentage: 50,
-                conditions: ['MVP completion', 'User testing validation']
-              }
-            ]
-          })
-        }
-        setIsLoading(false)
-      }, 1000)
-    }
-
-    loadDashboardData()
-  }, [role])
+  // TODO: DEVELOPMENT ONLY - Replace with real API calls when backend is implemented
+  // For now, we'll show empty states to demonstrate the UI structure
+  const dashboardData = {
+    ideas: [],
+    executorProposals: [],
+    activeProjects: [],
+    totalRoyaltiesEarned: '0',
+    acceptedProjects: [],
+    investorProposals: [],
+    activeMilestones: [],
+    totalEquityValue: '0',
+    investments: [],
+    portfolioValue: '0',
+    completedMilestones: 0,
+    pendingPayouts: []
+  }
 
   const renderInnovatorDashboard = () => (
     <div className="space-y-6">
@@ -250,61 +141,78 @@ export default function DashboardPage({ role }: DashboardPageProps) {
           </Link>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {dashboardData.ideas?.map((idea: any) => (
-            <div key={idea.id} className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
-              <div className="aspect-video bg-gray-200 dark:bg-gray-700 relative">
-                {idea.imageUri && (
-                  <img
-                    src={idea.imageUri}
-                    alt={idea.title}
-                    className="w-full h-full object-cover"
-                  />
-                )}
-                <div className="absolute top-2 right-2">
-                  <span className={`status-badge status-badge-${idea.status === IdeaStatus.OPEN ? 'idea' : 'project'}`}>
-                    {idea.status.replace('_', ' ')}
-                  </span>
-                </div>
-              </div>
-              
-              <div className="p-4">
-                <h4 className="font-semibold text-gray-900 dark:text-white mb-2 line-clamp-2">
-                  {idea.title}
-                </h4>
-                
-                <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400 mb-3">
-                  <span className="flex items-center">
-                    <Eye className="w-4 h-4 mr-1" />
-                    {idea.viewCount}
-                  </span>
-                  <span className="flex items-center">
-                    <MessageSquare className="w-4 h-4 mr-1" />
-                    {idea.proposalCount}
-                  </span>
+        {dashboardData.ideas?.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {dashboardData.ideas.map((idea: any) => (
+              <div key={idea.id} className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
+                <div className="aspect-video bg-gray-200 dark:bg-gray-700 relative">
+                  {idea.imageUri && (
+                    <img
+                      src={idea.imageUri}
+                      alt={idea.title}
+                      className="w-full h-full object-cover"
+                    />
+                  )}
+                  <div className="absolute top-2 right-2">
+                    <span className={`status-badge status-badge-${idea.status === IdeaStatus.OPEN ? 'idea' : 'project'}`}>
+                      {idea.status.replace('_', ' ')}
+                    </span>
+                  </div>
                 </div>
                 
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-500 dark:text-gray-400">
-                    {idea.createdAt.toLocaleDateString()}
-                  </span>
-                  <Link
-                    to={`/idea/${idea.id}`}
-                    className="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 text-sm font-medium"
-                  >
-                    View Details
-                  </Link>
+                <div className="p-4">
+                  <h4 className="font-semibold text-gray-900 dark:text-white mb-2 line-clamp-2">
+                    {idea.title}
+                  </h4>
+                  
+                  <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400 mb-3">
+                    <span className="flex items-center">
+                      <Eye className="w-4 h-4 mr-1" />
+                      {idea.viewCount}
+                    </span>
+                    <span className="flex items-center">
+                      <MessageSquare className="w-4 h-4 mr-1" />
+                      {idea.proposalCount}
+                    </span>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                      {idea.createdAt.toLocaleDateString()}
+                    </span>
+                    <Link
+                      to={`/idea/${idea.id}`}
+                      className="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 text-sm font-medium"
+                    >
+                      View Details
+                    </Link>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <Lightbulb className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No ideas yet</h4>
+            <p className="text-gray-600 dark:text-gray-400 mb-4">
+              Start by creating your first idea and finding executors to build it.
+            </p>
+            <Link
+              to="/ideas/create"
+              className="button-primary inline-flex items-center space-x-2"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Create Your First Idea</span>
+            </Link>
+          </div>
+        )}
       </div>
 
       {/* Executor Proposals */}
-      {dashboardData.executorProposals?.length > 0 && (
-        <div className="glass-card rounded-xl p-6">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Pending Proposals</h3>
+      <div className="glass-card rounded-xl p-6">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Pending Proposals</h3>
+        {dashboardData.executorProposals?.length > 0 ? (
           <div className="space-y-4">
             {dashboardData.executorProposals
               .filter((proposal: any) => proposal.status === 'pending')
@@ -332,8 +240,16 @@ export default function DashboardPage({ role }: DashboardPageProps) {
                 </div>
               ))}
           </div>
-        </div>
-      )}
+        ) : (
+          <div className="text-center py-8">
+            <MessageSquare className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+            <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No proposals yet</h4>
+            <p className="text-gray-600 dark:text-gray-400">
+              Proposals from executors will appear here once you create ideas.
+            </p>
+          </div>
+        )}
+      </div>
     </div>
   )
 
@@ -652,14 +568,6 @@ export default function DashboardPage({ role }: DashboardPageProps) {
       )}
     </div>
   )
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <LoadingSpinner size="large" />
-      </div>
-    )
-  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">

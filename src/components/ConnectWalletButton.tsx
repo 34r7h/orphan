@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { Wallet, Loader2, AlertCircle } from 'lucide-react'
 
@@ -13,7 +14,8 @@ export default function ConnectWalletButton({
   variant = 'primary',
   size = 'medium'
 }: ConnectWalletButtonProps) {
-  const { login, isLoading, error } = useAuth()
+  const navigate = useNavigate()
+  const { login, isLoading, error, isOnboardingComplete } = useAuth()
   const [isConnecting, setIsConnecting] = useState(false)
   const [showConnectorList, setShowConnectorList] = useState(false)
 
@@ -21,6 +23,13 @@ export default function ConnectWalletButton({
     try {
       setIsConnecting(true)
       await login()
+      
+      // After successful login, redirect based on onboarding status
+      if (isOnboardingComplete) {
+        navigate('/dashboard')
+      } else {
+        navigate('/onboarding')
+      }
     } catch (err) {
       console.error('CDP Connection error:', err)
       // Show error or fallback options

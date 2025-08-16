@@ -1,21 +1,23 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
-import { UserRole, IdeaStatus, ProjectStatus, FundingStatus } from '@/types'
+import { UserRole } from '@/types'
 import {
-  User,
   Edit,
   Save,
   X,
+  User,
+  MapPin,
+  Globe,
+  Twitter,
+  Linkedin,
+  Github,
+  Calendar,
+  Plus,
   Lightbulb,
   Briefcase,
   DollarSign,
-  Calendar,
-  MapPin,
-  TrendingUp,
   Eye,
-  MessageSquare,
-  Plus,
   Settings
 } from 'lucide-react'
 import LoadingSpinner from '@/components/LoadingSpinner'
@@ -23,138 +25,57 @@ import LoadingSpinner from '@/components/LoadingSpinner'
 export default function ProfilePage() {
   const { address } = useParams()
   const navigate = useNavigate()
-  const { user: currentUser } = useAuth()
-  const [isLoading, setIsLoading] = useState(true)
+  const { user: currentUser, updateProfile, clearAllUserData } = useAuth()
+  const [isLoading, setIsLoading] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
-  const [profileData, setProfileData] = useState<any>({})
   const [editForm, setEditForm] = useState<any>({})
   const [activeTab, setActiveTab] = useState('overview')
 
   // Determine if viewing own profile or someone else's
   const isOwnProfile = !address || address === currentUser?.address
 
+  // Use current user data or create profile data from user
+  const profileData = currentUser || {
+    address: address || '0x...',
+    role: UserRole.INNOVATOR,
+    name: 'Anonymous User',
+    bio: 'No bio available',
+    avatar: '',
+    location: '',
+    website: '',
+    twitter: '',
+    linkedin: '',
+    github: '',
+    createdAt: new Date(),
+    updatedAt: new Date()
+  }
+
   useEffect(() => {
-    const loadProfileData = async () => {
-      setIsLoading(true)
-      // Simulate API call
-      setTimeout(() => {
-        const mockProfile = {
-          address: address || currentUser?.address || '0x123...',
-          role: UserRole.INNOVATOR,
-          name: 'Alice Chen',
-          bio: 'Passionate innovator building the future of decentralized applications. Focused on DeFi and social impact projects.',
-          avatar: 'https://via.placeholder.com/150',
-          location: 'San Francisco, CA',
-          website: 'https://alicechen.dev',
-          twitter: '@alicechen',
-          linkedin: 'alicechen',
-          github: 'alicechen',
-          createdAt: new Date('2024-01-01'),
-          stats: {
-            ideasCreated: 5,
-            projectsExecuted: 2,
-            investmentsMade: 3,
-            totalValue: '125000'
-          },
-          ideas: [
-            {
-              id: '1',
-              title: 'Decentralized Task Management Platform',
-              status: IdeaStatus.OPEN,
-              proposalCount: 5,
-              viewCount: 234,
-              createdAt: new Date('2024-01-15'),
-              imageUri: 'https://via.placeholder.com/400'
-            },
-            {
-              id: '2',
-              title: 'AI-Powered Smart Contract Auditor',
-              status: IdeaStatus.IN_PROGRESS,
-              proposalCount: 3,
-              viewCount: 456,
-              createdAt: new Date('2024-01-10'),
-              imageUri: 'https://via.placeholder.com/400'
-            }
-          ],
-          projects: [
-            {
-              id: '1',
-              title: 'AI-Powered Smart Contract Auditor',
-              status: ProjectStatus.ACTIVE,
-              progress: 65,
-              equityPercentage: 95,
-              nextMilestone: 'Security audit completion',
-              nextMilestoneDate: new Date('2024-03-15'),
-              imageUri: 'https://via.placeholder.com/400'
-            }
-          ],
-          investments: [
-            {
-              id: '1',
-              projectTitle: 'Decentralized Task Management Platform',
-              executorName: 'Charlie Dev',
-              investmentAmount: '15000',
-              equityPercentage: 10,
-              status: FundingStatus.FUNDED,
-              progress: 45,
-              nextPayout: '7500',
-              nextPayoutDate: new Date('2024-04-01')
-            }
-          ],
-          activity: [
-            {
-              id: '1',
-              type: 'idea_created',
-              title: 'Created new idea: Decentralized Task Management Platform',
-              timestamp: new Date('2024-01-15'),
-              details: 'Idea NFT minted with 5% royalty rights'
-            },
-            {
-              id: '2',
-              type: 'proposal_received',
-              title: 'Received executor proposal from Charlie Dev',
-              timestamp: new Date('2024-01-20'),
-              details: 'Proposal for 95% equity over 90 days'
-            },
-            {
-              id: '3',
-              type: 'proposal_accepted',
-              title: 'Accepted executor proposal for AI Auditor',
-              timestamp: new Date('2024-01-25'),
-              details: 'Project NFT minted, development started'
-            }
-          ]
-        }
-
-        setProfileData(mockProfile)
-        setEditForm({
-          name: mockProfile.name,
-          bio: mockProfile.bio,
-          location: mockProfile.location,
-          website: mockProfile.website,
-          twitter: mockProfile.twitter,
-          linkedin: mockProfile.linkedin,
-          github: mockProfile.github
-        })
-        setIsLoading(false)
-      }, 1000)
-    }
-
-    loadProfileData()
-  }, [address, currentUser?.address])
+    // Initialize edit form with current profile data
+    setEditForm({
+      name: profileData.name || '',
+      bio: profileData.bio || '',
+      location: profileData.location || '',
+      website: profileData.website || '',
+      twitter: profileData.twitter || '',
+      linkedin: profileData.linkedin || '',
+      github: profileData.github || ''
+    })
+  }, [profileData])
 
   const handleEditSave = async () => {
     try {
-      // Simulate API call to update profile
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      setIsLoading(true)
       
-      setProfileData((prev: any) => ({
-        ...prev,
-        ...editForm
-      }))
+      // Update profile using AuthContext
+      await updateProfile(editForm)
+      
       setIsEditing(false)
     } catch (error) {
       console.error('Error updating profile:', error)
+      alert('Failed to update profile. Please try again.')
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -188,65 +109,116 @@ export default function ProfilePage() {
 
   const renderOverviewTab = () => (
     <div className="space-y-6">
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="glass-card rounded-xl p-6 text-center">
-          <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/20 rounded-lg flex items-center justify-center mx-auto mb-3">
-            <Lightbulb className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+      {/* Profile Information */}
+      <div className="glass-card rounded-xl p-6">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Profile Information</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Full Name
+            </label>
+            <p className="text-gray-900 dark:text-white">{profileData.name || 'Not set'}</p>
           </div>
-          <p className="text-2xl font-bold text-gray-900 dark:text-white">{profileData.stats?.ideasCreated || 0}</p>
-          <p className="text-sm text-gray-600 dark:text-gray-400">Ideas Created</p>
-        </div>
-        
-        <div className="glass-card rounded-xl p-6 text-center">
-          <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex items-center justify-center mx-auto mb-3">
-            <Briefcase className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Role
+            </label>
+            <span className={`status-badge ${getRoleBadgeColor()}`}>
+              {profileData.role}
+            </span>
           </div>
-          <p className="text-2xl font-bold text-gray-900 dark:text-white">{profileData.stats?.projectsExecuted || 0}</p>
-          <p className="text-sm text-gray-600 dark:text-gray-400">Projects Executed</p>
-        </div>
-        
-        <div className="glass-card rounded-xl p-6 text-center">
-          <div className="w-12 h-12 bg-green-100 dark:bg-green-900/20 rounded-lg flex items-center justify-center mx-auto mb-3">
-            <DollarSign className="w-6 h-6 text-green-600 dark:text-green-400" />
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Location
+            </label>
+            <p className="text-gray-900 dark:text-white">{profileData.location || 'Not set'}</p>
           </div>
-          <p className="text-2xl font-bold text-gray-900 dark:text-white">{profileData.stats?.investmentsMade || 0}</p>
-          <p className="text-sm text-gray-600 dark:text-gray-400">Investments Made</p>
-        </div>
-        
-        <div className="glass-card rounded-xl p-6 text-center">
-          <div className="w-12 h-12 bg-yellow-100 dark:bg-yellow-900/20 rounded-lg flex items-center justify-center mx-auto mb-3">
-            <TrendingUp className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Member Since
+            </label>
+            <p className="text-gray-900 dark:text-white">
+              {profileData.createdAt ? new Date(profileData.createdAt).toLocaleDateString() : 'Unknown'}
+            </p>
           </div>
-          <p className="text-2xl font-bold text-gray-900 dark:text-white">${profileData.stats?.totalValue || '0'}</p>
-          <p className="text-sm text-gray-600 dark:text-gray-400">Total Value</p>
+          
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Bio
+            </label>
+            <p className="text-gray-900 dark:text-white">
+              {profileData.bio || 'No bio available'}
+            </p>
+          </div>
         </div>
       </div>
 
-      {/* Recent Activity */}
-      <div className="glass-card rounded-xl p-6">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Recent Activity</h3>
-        <div className="space-y-4">
-          {profileData.activity?.slice(0, 5).map((activity: any) => (
-            <div key={activity.id} className="flex items-start space-x-4 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-              <div className="w-8 h-8 bg-primary-100 dark:bg-primary-900/20 rounded-full flex items-center justify-center flex-shrink-0">
-                <Calendar className="w-4 h-4 text-primary-600 dark:text-primary-400" />
+      {/* Social Links */}
+      {(profileData.website || profileData.twitter || profileData.linkedin || profileData.github) && (
+        <div className="glass-card rounded-xl p-6">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Social Links</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {profileData.website && (
+              <div className="flex items-center space-x-3">
+                <Globe className="w-5 h-5 text-gray-400" />
+                <a
+                  href={profileData.website}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
+                >
+                  {profileData.website}
+                </a>
               </div>
-              <div className="flex-1">
-                <h4 className="font-medium text-gray-900 dark:text-white mb-1">
-                  {activity.title}
-                </h4>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-                  {activity.details}
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-500">
-                  {activity.timestamp.toLocaleDateString()}
-                </p>
+            )}
+            
+            {profileData.twitter && (
+              <div className="flex items-center space-x-3">
+                <Twitter className="w-5 h-5 text-gray-400" />
+                <a
+                  href={`https://twitter.com/${profileData.twitter.replace('@', '')}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
+                >
+                  {profileData.twitter}
+                </a>
               </div>
-            </div>
-          ))}
+            )}
+            
+            {profileData.linkedin && (
+              <div className="flex items-center space-x-3">
+                <Linkedin className="w-5 h-5 text-gray-400" />
+                <a
+                  href={`https://linkedin.com/in/${profileData.linkedin}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
+                >
+                  {profileData.linkedin}
+                </a>
+              </div>
+            )}
+            
+            {profileData.github && (
+              <div className="flex items-center space-x-3">
+                <Github className="w-5 h-5 text-gray-400" />
+                <a
+                  href={`https://github.com/${profileData.github}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
+                >
+                  {profileData.github}
+                </a>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   )
 
@@ -264,169 +236,78 @@ export default function ProfilePage() {
         </div>
       )}
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {profileData.ideas?.map((idea: any) => (
-          <div key={idea.id} className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
-            <div className="aspect-video bg-gray-200 dark:bg-gray-700 relative">
-              {idea.imageUri && (
-                <img
-                  src={idea.imageUri}
-                  alt={idea.title}
-                  className="w-full h-full object-cover"
-                />
-              )}
-              <div className="absolute top-2 right-2">
-                <span className={`status-badge status-badge-${idea.status === IdeaStatus.OPEN ? 'idea' : 'project'}`}>
-                  {idea.status.replace('_', ' ')}
-                </span>
-              </div>
-            </div>
-            
-            <div className="p-4">
-              <h4 className="font-semibold text-gray-900 dark:text-white mb-2 line-clamp-2">
-                {idea.title}
-              </h4>
-              
-              <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400 mb-3">
-                <span className="flex items-center">
-                  <Eye className="w-4 h-4 mr-1" />
-                  {idea.viewCount}
-                </span>
-                <span className="flex items-center">
-                  <MessageSquare className="w-4 h-4 mr-1" />
-                  {idea.proposalCount}
-                </span>
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-500 dark:text-gray-400">
-                  {idea.createdAt.toLocaleDateString()}
-                </span>
-                <button
-                  onClick={() => navigate(`/idea/${idea.id}`)}
-                  className="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 text-sm font-medium"
-                >
-                  View Details
-                </button>
-              </div>
-            </div>
-          </div>
-        ))}
+      <div className="glass-card rounded-xl p-8 text-center">
+        <Lightbulb className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+          No ideas yet
+        </h3>
+        <p className="text-gray-600 dark:text-gray-400 mb-4">
+          {isOwnProfile 
+            ? "Start by creating your first idea and finding executors to build it."
+            : "This user hasn't created any ideas yet."
+          }
+        </p>
+        {isOwnProfile && profileData.role === UserRole.INNOVATOR && (
+          <button
+            onClick={() => navigate('/ideas/create')}
+            className="button-primary inline-flex items-center space-x-2"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Create Your First Idea</span>
+          </button>
+        )}
       </div>
     </div>
   )
 
   const renderProjectsTab = () => (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {profileData.projects?.map((project: any) => (
-          <div key={project.id} className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
-            <div className="aspect-video bg-gray-200 dark:bg-gray-700 relative">
-              {project.imageUri && (
-                <img
-                  src={project.imageUri}
-                  alt={project.title}
-                  className="w-full h-full object-cover"
-                />
-              )}
-              <div className="absolute top-2 right-2">
-                <span className="status-badge status-badge-project">
-                  {project.status}
-                </span>
-              </div>
-            </div>
-            
-            <div className="p-4">
-              <h4 className="font-semibold text-gray-900 dark:text-white mb-2 line-clamp-2">
-                {project.title}
-              </h4>
-              
-              <div className="mb-3">
-                <div className="flex justify-between text-sm mb-1">
-                  <span className="text-gray-600 dark:text-gray-400">Progress</span>
-                  <span className="font-medium text-gray-900 dark:text-white">{project.progress}%</span>
-                </div>
-                <div className="milestone-progress">
-                  <div
-                    className="milestone-progress-bar"
-                    style={{ width: `${project.progress}%` }}
-                  ></div>
-                </div>
-              </div>
-              
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-500 dark:text-gray-400">
-                  Next: {project.nextMilestone}
-                </span>
-                <span className="text-gray-500 dark:text-gray-400">
-                  Due: {project.nextMilestoneDate.toLocaleDateString()}
-                </span>
-              </div>
-              
-              <div className="mt-3 flex items-center justify-between">
-                <span className="text-sm font-medium text-blue-600 dark:text-blue-400">
-                  {project.equityPercentage}% Equity
-                </span>
-                <button
-                  onClick={() => navigate(`/project/${project.id}`)}
-                  className="button-primary text-sm px-3 py-1"
-                >
-                  View Details
-                </button>
-              </div>
-            </div>
-          </div>
-        ))}
+      <div className="glass-card rounded-xl p-8 text-center">
+        <Briefcase className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+          No projects yet
+        </h3>
+        <p className="text-gray-600 dark:text-gray-400 mb-4">
+          {isOwnProfile 
+            ? "Projects will appear here once you start executing ideas or get hired as an executor."
+            : "This user hasn't been involved in any projects yet."
+          }
+        </p>
+        {isOwnProfile && profileData.role === UserRole.EXECUTOR && (
+          <button
+            onClick={() => navigate('/marketplace/ideas')}
+            className="button-primary inline-flex items-center space-x-2"
+          >
+            <Eye className="w-4 h-4" />
+            <span>Browse Ideas to Execute</span>
+          </button>
+        )}
       </div>
     </div>
   )
 
   const renderInvestmentsTab = () => (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {profileData.investments?.map((investment: any) => (
-          <div key={investment.id} className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
-            <div className="p-4">
-              <h4 className="font-semibold text-gray-900 dark:text-white mb-2 line-clamp-2">
-                {investment.projectTitle}
-              </h4>
-              
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                Executor: {investment.executorName}
-              </p>
-              
-              <div className="mb-3">
-                <div className="flex justify-between text-sm mb-1">
-                  <span className="text-gray-600 dark:text-gray-400">Progress</span>
-                  <span className="font-medium text-gray-900 dark:text-white">{investment.progress}%</span>
-                </div>
-                <div className="milestone-progress">
-                  <div
-                    className="milestone-progress-bar"
-                    style={{ width: `${investment.progress}%` }}
-                  ></div>
-                </div>
-              </div>
-              
-              <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400 mb-3">
-                <span>Investment: ${parseInt(investment.investmentAmount).toLocaleString()}</span>
-                <span>Equity: {investment.equityPercentage}%</span>
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-500 dark:text-gray-400">
-                  Next Payout: ${investment.nextPayout}
-                </span>
-                <button
-                  onClick={() => navigate(`/investment/${investment.id}`)}
-                  className="button-primary text-sm px-3 py-1"
-                >
-                  View Details
-                </button>
-              </div>
-            </div>
-          </div>
-        ))}
+      <div className="glass-card rounded-xl p-8 text-center">
+        <DollarSign className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+          No investments yet
+        </h3>
+        <p className="text-gray-600 dark:text-gray-400 mb-4">
+          {isOwnProfile 
+            ? "Investments will appear here once you start funding projects as an investor."
+            : "This user hasn't made any investments yet."
+          }
+        </p>
+        {isOwnProfile && profileData.role === UserRole.INVESTOR && (
+          <button
+            onClick={() => navigate('/marketplace/projects')}
+            className="button-primary inline-flex items-center space-x-2"
+          >
+            <Eye className="w-4 h-4" />
+            <span>Browse Projects to Invest In</span>
+          </button>
+        )}
       </div>
     </div>
   )
@@ -491,7 +372,7 @@ export default function ProfilePage() {
                   )}
                   <span className="flex items-center">
                     <Calendar className="w-4 h-4 mr-1" />
-                    Member since {profileData.createdAt.toLocaleDateString()}
+                    Member since {profileData.createdAt ? new Date(profileData.createdAt).toLocaleDateString() : 'Unknown'}
                   </span>
                 </div>
               </div>
@@ -533,6 +414,12 @@ export default function ProfilePage() {
                   <Settings className="w-4 h-4" />
                   <span>Settings</span>
                 </Link>
+                <button
+                  onClick={clearAllUserData}
+                  className="button-secondary inline-flex items-center space-x-2 bg-red-600 hover:bg-red-700 text-white"
+                >
+                  <span>Clear All Data</span>
+                </button>
               </div>
             )}
           </div>

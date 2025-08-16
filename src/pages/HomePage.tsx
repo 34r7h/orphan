@@ -14,7 +14,7 @@ import {
 import ConnectWalletButton from '@/components/ConnectWalletButton'
 
 export default function HomePage() {
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, isOnboardingComplete } = useAuth()
   const navigate = useNavigate()
 
   const features = [
@@ -108,11 +108,17 @@ export default function HomePage() {
   ]
 
   const handleRoleSelect = (role: UserRole) => {
+    console.log('Role selected on homepage:', role)
     if (isAuthenticated) {
-      navigate('/dashboard')
+      if (isOnboardingComplete) {
+        navigate('/dashboard')
+      } else {
+        navigate('/onboarding')
+      }
     } else {
       // Store intended role in session storage for after login
-      sessionStorage.setItem('intendedRole', role)
+      console.log('Storing intended role in session storage:', role.toString())
+      sessionStorage.setItem('intendedRole', role.toString())
       // Trigger wallet connection
       document.getElementById('connect-wallet-trigger')?.click()
     }
@@ -136,10 +142,10 @@ export default function HomePage() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               {isAuthenticated ? (
                 <Link
-                  to="/dashboard"
+                  to={isOnboardingComplete ? "/dashboard" : "/onboarding"}
                   className="button-primary inline-flex items-center justify-center space-x-2"
                 >
-                  <span>Go to Dashboard</span>
+                  <span>{isOnboardingComplete ? "Go to Dashboard" : "Complete Setup"}</span>
                   <ArrowRight className="w-4 h-4" />
                 </Link>
               ) : (
@@ -301,10 +307,10 @@ export default function HomePage() {
           )}
           {isAuthenticated && (
             <Link
-              to="/dashboard"
+              to={isOnboardingComplete ? "/dashboard" : "/onboarding"}
               className="inline-flex items-center justify-center space-x-2 bg-white text-primary-600 hover:bg-gray-100 font-medium py-3 px-6 rounded-lg transition-colors"
             >
-              <span>Get Started</span>
+              <span>{isOnboardingComplete ? "Get Started" : "Complete Setup"}</span>
               <ArrowRight className="w-5 h-5" />
             </Link>
           )}

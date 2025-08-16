@@ -8,6 +8,7 @@ import ProtectedRoute from '@/components/ProtectedRoute'
 
 // Lazy load pages for better performance
 const HomePage = lazy(() => import('@/pages/HomePage'))
+const OnboardingPage = lazy(() => import('@/pages/OnboardingPage'))
 const MarketplacePage = lazy(() => import('@/pages/MarketplacePage'))
 const ProfilePage = lazy(() => import('@/pages/ProfilePage'))
 const DashboardPage = lazy(() => import('@/pages/DashboardPage'))
@@ -20,7 +21,7 @@ const SettingsPage = lazy(() => import('@/pages/SettingsPage'))
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'))
 
 function App() {
-  const { user, isLoading } = useAuth()
+  const { isLoading, isOnboardingComplete } = useAuth()
 
   if (isLoading) {
     return (
@@ -81,42 +82,22 @@ function App() {
           {/* Investment Routes */}
           <Route path="/investment/:id" element={<InvestmentPage />} />
 
+          {/* Onboarding Route */}
+          <Route
+            path="/onboarding"
+            element={
+              <ProtectedRoute>
+                {isOnboardingComplete ? <Navigate to="/dashboard" replace /> : <OnboardingPage />}
+              </ProtectedRoute>
+            }
+          />
+
           {/* Protected Routes */}
           <Route
             path="/dashboard"
             element={
               <ProtectedRoute>
-                {user?.role === UserRole.INNOVATOR && <Navigate to="/dashboard/innovator" replace />}
-                {user?.role === UserRole.EXECUTOR && <Navigate to="/dashboard/executor" replace />}
-                {user?.role === UserRole.INVESTOR && <Navigate to="/dashboard/investor" replace />}
-                {!user?.role && <Navigate to="/profile" replace />}
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/dashboard/innovator"
-            element={
-              <ProtectedRoute allowedRoles={[UserRole.INNOVATOR]}>
-                <DashboardPage role={UserRole.INNOVATOR} />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/dashboard/executor"
-            element={
-              <ProtectedRoute allowedRoles={[UserRole.EXECUTOR]}>
-                <DashboardPage role={UserRole.EXECUTOR} />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/dashboard/investor"
-            element={
-              <ProtectedRoute allowedRoles={[UserRole.INVESTOR]}>
-                <DashboardPage role={UserRole.INVESTOR} />
+                {!isOnboardingComplete ? <Navigate to="/onboarding" replace /> : <DashboardPage />}
               </ProtectedRoute>
             }
           />
@@ -125,12 +106,10 @@ function App() {
             path="/profile"
             element={
               <ProtectedRoute>
-                <ProfilePage />
+                {!isOnboardingComplete ? <Navigate to="/onboarding" replace /> : <ProfilePage />}
               </ProtectedRoute>
             }
           />
-
-          <Route path="/profile/:address" element={<ProfilePage />} />
 
           <Route
             path="/settings"

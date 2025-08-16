@@ -12,6 +12,8 @@ interface AuthContextType {
   selectRole: (role: UserRole) => Promise<void>
   updateProfile: (data: Partial<User>) => Promise<void>
   refreshUser: () => Promise<void>
+  isOnboardingComplete: boolean
+  clearAllUserData: () => void
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -40,10 +42,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Check if user exists in local storage or database
   const fetchUser = useCallback(async (walletAddress: string) => {
     try {
-      // In a real app, this would be an API call to your backend
+      // TODO: DEVELOPMENT ONLY - Replace with API call to backend when implemented
+      // For now, we use localStorage to simulate user persistence
       const storedUser = localStorage.getItem(`user_${walletAddress}`)
       if (storedUser) {
         const userData = JSON.parse(storedUser)
+        
+        // Convert date strings back to Date objects for localStorage compatibility
+        if (userData.createdAt) {
+          userData.createdAt = new Date(userData.createdAt)
+        }
+        if (userData.updatedAt) {
+          userData.updatedAt = new Date(userData.updatedAt)
+        }
+        
         setUser(userData)
         return userData
       }
@@ -57,15 +69,41 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Create or update user
   const createOrUpdateUser = useCallback(async (walletAddress: string, role?: UserRole) => {
     try {
+      // Check if there's an intended role in session storage
+      const intendedRole = sessionStorage.getItem('intendedRole')
+      let defaultRole = UserRole.INNOVATOR // Default fallback
+      
+      console.log('Creating/updating user with wallet address:', walletAddress)
+      console.log('Intended role from session storage:', intendedRole)
+      console.log('Role parameter passed:', role)
+      
+      if (intendedRole) {
+        // Validate that the intended role is a valid UserRole
+        if (Object.values(UserRole).includes(intendedRole as UserRole)) {
+          defaultRole = intendedRole as UserRole
+          console.log('Using intended role from session storage:', defaultRole)
+        } else {
+          console.warn('Invalid intended role in session storage:', intendedRole)
+        }
+      } else if (role && Object.values(UserRole).includes(role)) {
+        defaultRole = role
+        console.log('Using role parameter:', defaultRole)
+      } else {
+        console.log('Using default role:', defaultRole)
+      }
+      
       const userData: User = {
         id: walletAddress.toLowerCase(),
         address: walletAddress,
-        role: role || UserRole.INNOVATOR,
+        role: defaultRole,
         createdAt: new Date(),
         updatedAt: new Date(),
       }
 
-      // In a real app, this would be an API call to your backend
+      console.log('Created user data:', userData)
+
+      // TODO: DEVELOPMENT ONLY - Replace with API call to backend when implemented
+      // For now, we use localStorage to simulate user persistence
       localStorage.setItem(`user_${walletAddress}`, JSON.stringify(userData))
       setUser(userData)
       return userData
@@ -84,8 +122,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (!wallet) {
         // Initialize Coinbase Wallet SDK with CDP-compliant config
         const newWallet = new CoinbaseWalletSDK({
-          appName: import.meta.env.VITE_APP_NAME || 'Orphan Platform',
-          appLogoUrl: 'https://via.placeholder.com/150',
+          appName: 'Orphan Platform',
+          appLogoUrl: '/orphan_logo.png',
           appChainIds: [import.meta.env.VITE_BASE_CHAIN_ID || 8453], // Base mainnet
         })
         setWallet(newWallet)
@@ -115,6 +153,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
         if (!userData) {
           userData = await createOrUpdateUser(accountAddress)
         }
+        
+        // Don't clear intended role here - it's needed for onboarding
+        // sessionStorage.removeItem('intendedRole')
 
         setUser(userData)
       }
@@ -142,7 +183,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setIsConnected(false)
       setUser(null)
 
-      // Clear any cached data
+      // TODO: DEVELOPMENT ONLY - Clear cached data from localStorage
+      // In production, this would clear server-side session data
       if (address) {
         localStorage.removeItem(`user_${address}`)
       }
@@ -153,6 +195,23 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setIsLoading(false)
     }
   }, [wallet, address])
+
+  // Clear all user data (for development/testing)
+  const clearAllUserData = useCallback(() => {
+    // Clear all localStorage entries that start with 'user_'
+    Object.keys(localStorage).forEach(key => {
+      if (key.startsWith('user_')) {
+        localStorage.removeItem(key)
+      }
+    })
+    // Also clear session storage
+    sessionStorage.clear()
+    // Reset state
+    setUser(null)
+    setAddress(null)
+    setIsConnected(false)
+    setWallet(null)
+  }, [])
 
   // Select user role
   const selectRole = useCallback(async (role: UserRole) => {
@@ -168,7 +227,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         updatedAt: new Date(),
       }
 
-      // In a real app, this would be an API call
+      // TODO: DEVELOPMENT ONLY - Replace with API call to backend when implemented
       localStorage.setItem(`user_${address}`, JSON.stringify(updatedUser))
       setUser(updatedUser)
     } catch (err) {
@@ -194,7 +253,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         updatedAt: new Date(),
       }
 
-      // In a real app, this would be an API call
+      // TODO: DEVELOPMENT ONLY - Replace with API call to backend when implemented
       localStorage.setItem(`user_${address}`, JSON.stringify(updatedUser))
       setUser(updatedUser)
     } catch (err) {
@@ -264,6 +323,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     selectRole,
     updateProfile,
     refreshUser,
+    isOnboardingComplete: !!(user?.name && user?.role),
+    clearAllUserData,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
